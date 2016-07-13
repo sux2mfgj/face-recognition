@@ -1,0 +1,79 @@
+# -*- coding:utf-8 -*-
+
+import cv2
+import threading
+from datetime import datetime
+
+class FaceThread(threading.Thread):
+    def __init__(self, frame):
+        super(FaceThread, self).__init__()
+#          self._cascade_path = "./haarcascade_frontalface_default.xml"
+#          self._cascade_path = "./haarcascade_frontalface_alt_tree.xml"
+#          self._cascade_path = "./haarcascade_frontalface_alt.xml"
+        self._cascade_path = "./haarcascade_frontalface_alt2.xml"
+
+        self._frame = frame
+        self._color = (255, 255, 255) 
+
+    def run(self):
+        self._frame_gray = cv2.cvtColor(self._frame, cv2.cv.CV_BGR2GRAY)
+#        self._frame_gray = cv2.cvtColor(self._frame, cv2.COLOR_BGR2GRAY)
+
+        self._cascade = cv2.CascadeClassifier(self._cascade_path)
+
+        facerect = self._cascade.detectMultiScale(
+                    self._frame_gray, 
+                    scaleFactor=1.2, 
+                    minNeighbors=3, 
+                    minSize=(10, 10))
+
+        if len(facerect) > 0:
+            print('detect face')
+            for self._rect in facerect:
+                
+                cv2.rectangle(
+                        self._frame,
+                        tuple(self._rect[0:2]),
+                        tuple(self._rect[0:2] + self._rect[2:4]),
+                        self._color, thickness=2)
+
+                # triming face
+                x = self._rect[0]
+                y = self._rect[1]
+                width = self._rect[2]
+                height = self._rect[3]
+                dst = self._frame[y:y+height, x:x+width]
+
+                now = datetime.now().strftime('%Y%m%d%H%M%S')
+                image_path = 'images/' + now + '.jpg'
+                cv2.imwrite(image_path, dst)
+
+cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+    print("can't open the camera")
+    exit(1)
+
+# set up fps??
+cap.set(5, 20)
+
+while True:
+    ret, frame = cap.read()
+
+    if not ret:
+        break
+	
+#    cv2.imshow('camera capture', frame)
+
+    if(threading.activeCount() == 1):
+        th = FaceThread(frame)
+        th.start()
+    
+    k = cv2.waitKey(10)
+    
+    c = chr(k & 255)
+    if c in ['q', chr(27)]:
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+
