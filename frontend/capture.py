@@ -3,7 +3,9 @@
 import cv2
 import threading
 import os.path
+import requests
 from datetime import datetime
+
 
 class FaceThread(threading.Thread):
     def __init__(self, frame):
@@ -17,24 +19,24 @@ class FaceThread(threading.Thread):
             raise OSError("cascade file not found")
 
         self._frame = frame
-        self._color = (255, 255, 255) 
+        self._color = (255, 255, 255)
 
     def run(self):
-        self._frame_gray = cv2.cvtColor(self._frame, cv2.cv.CV_BGR2GRAY)
-#        self._frame_gray = cv2.cvtColor(self._frame, cv2.COLOR_BGR2GRAY)
+#          self._frame_gray = cv2.cvtColor(self._frame, cv2.cv.CV_BGR2GRAY)
+        self._frame_gray = cv2.cvtColor(self._frame, cv2.COLOR_BGR2GRAY)
 
         self._cascade = cv2.CascadeClassifier(self._cascade_path)
 
         facerect = self._cascade.detectMultiScale(
-                    self._frame_gray, 
-                    scaleFactor=1.2, 
-                    minNeighbors=3, 
+                    self._frame_gray,
+                    scaleFactor=1.2,
+                    minNeighbors=3,
                     minSize=(10, 10))
 
         if len(facerect) > 0:
             print('detect face')
             for self._rect in facerect:
-                
+
                 cv2.rectangle(
                         self._frame,
                         tuple(self._rect[0:2]),
@@ -51,6 +53,15 @@ class FaceThread(threading.Thread):
                 now = datetime.now().strftime('%Y%m%d%H%M%S')
                 image_path = 'images/' + now + '.jpg'
                 cv2.imwrite(image_path, dst)
+                image = open(image_path, 'rb')
+
+                send_image(image)
+
+
+def send_image(image):
+    files = {'file': ('a.jpg', image, 'image/jpeg')}
+    requests.post('http://localhost:5000/upload', files=files)
+
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -65,19 +76,18 @@ while True:
 
     if not ret:
         break
-	
+
 #    cv2.imshow('camera capture', frame)
 
     if(threading.activeCount() == 1):
         th = FaceThread(frame)
         th.start()
-    
-    k = cv2.waitKey(10)
-    
+
+    k = cv2.waitKey(1000)
+
     c = chr(k & 255)
     if c in ['q', chr(27)]:
         break
 
 cap.release()
 cv2.destroyAllWindows()
-

@@ -19,7 +19,7 @@ func image_upload(c *gin.Context) {
         panic(err)
     }
 
-    img.Save(fmt.Sprintf("%d.png", time.Now().Unix()))
+    img.Save(fmt.Sprintf("%d.jpg", time.Now().Unix()))
 
     c.Redirect(http.StatusMovedPermanently, "/")
 }
