@@ -2,6 +2,7 @@
 
 import cv2
 import threading
+import os.path
 from datetime import datetime
 
 class FaceThread(threading.Thread):
@@ -11,6 +12,9 @@ class FaceThread(threading.Thread):
 #          self._cascade_path = "./haarcascade_frontalface_alt_tree.xml"
 #          self._cascade_path = "./haarcascade_frontalface_alt.xml"
         self._cascade_path = "./haarcascade_frontalface_alt2.xml"
+
+        if not os.path.exists(self._cascade_path):
+            raise OSError("cascade file not found")
 
         self._frame = frame
         self._color = (255, 255, 255) 
