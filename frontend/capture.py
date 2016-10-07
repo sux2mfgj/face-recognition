@@ -16,7 +16,7 @@ class FaceThread(threading.Thread):
 #          self._cascade_path = "./haarcascade_frontalface_default.xml"
 #          self._cascade_path = "./haarcascade_frontalface_alt_tree.xml"
 #          self._cascade_path = "./haarcascade_frontalface_alt.xml"
-        self._cascade_path = "/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt2.xml"
+        self._cascade_path = "/usr/share/opencv/haarcascades/haarcascade_frontalface_alt2.xml"
 
         if not os.path.exists(self._cascade_path):
             raise OSError("cascade file not found")
@@ -53,23 +53,25 @@ class FaceThread(threading.Thread):
                 height = self._rect[3]
                 dst = self._frame[y:y+height, x:x+width]
 
-                now = datetime.now().strftime('%Y%m%d%H%M%S')
-                image_path = 'images/' + now + '.jpg'
+                self.now = datetime.now().strftime('%Y%m%d%H%M%S')
+                image_path = 'images/' + self.now + '.jpg'
                 cv2.imwrite(image_path, dst)
                 image = open(image_path, 'rb')
 
                 send_image(image)
 
 
-def send_image(image):
-    files = {'file': ('a.jpg', image, 'image/jpeg')}
-    # requests.post('http://localhost:5000/upload', files=files)
-    commands.getoutput("mosquitto_pub --cafile ../certs/root-CA.crt --cert ../certs/certificate.pem.crt --key ../certs/private.pem.key   -h xxx.amazonaws.com  -p 8883 -q 1 -d -t 'topic/xxx' -m '{\"deviceid\":\"pi_01\", \"message\":\"image_path\"}'")
+	def send_image(image):
+	    files = {'file': ('a.jpg', image, 'image/jpeg')}
+	    # requests.post('http://localhost:5000/upload', files=files)
+	    commands.getoutput("mosquitto_pub --cafile ../../certs/root-CA.crt --cert ../../certs/certificate.pem.crt --key ../../certs/private.pem.key   -h xxx.iot.us-west-2.amazonaws.com  -p 8883 -q 1 -d -t 'topic/pi_db' -m '{\"deviceid\":\"pi_03\", \"date\":%s, \"image_id\":\"%s\"}'" % (now, 'google'))
+	    exit(1)
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     print("can't open the camera")
     exit(1)
+
 
 # set up fps??
 cap.set(5, 20)
