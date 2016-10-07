@@ -1,9 +1,12 @@
 # -*- coding:utf-8 -*-
 
+import sys
+sys.path.append('/usr/local/lib/python2.7/site-packages')
 import cv2
 import threading
 import os.path
 import requests
+import commands
 from datetime import datetime
 
 
@@ -13,7 +16,7 @@ class FaceThread(threading.Thread):
 #          self._cascade_path = "./haarcascade_frontalface_default.xml"
 #          self._cascade_path = "./haarcascade_frontalface_alt_tree.xml"
 #          self._cascade_path = "./haarcascade_frontalface_alt.xml"
-        self._cascade_path = "./haarcascade_frontalface_alt2.xml"
+        self._cascade_path = "/usr/local/share/OpenCV/haarcascades/haarcascade_frontalface_alt2.xml"
 
         if not os.path.exists(self._cascade_path):
             raise OSError("cascade file not found")
@@ -60,8 +63,8 @@ class FaceThread(threading.Thread):
 
 def send_image(image):
     files = {'file': ('a.jpg', image, 'image/jpeg')}
-    requests.post('http://localhost:5000/upload', files=files)
-
+    # requests.post('http://localhost:5000/upload', files=files)
+    commands.getoutput("mosquitto_pub --cafile ../certs/root-CA.crt --cert ../certs/certificate.pem.crt --key ../certs/private.pem.key   -h xxx.amazonaws.com  -p 8883 -q 1 -d -t 'topic/xxx' -m '{\"deviceid\":\"pi_01\", \"message\":\"image_path\"}'")
 
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
@@ -77,7 +80,7 @@ while True:
     if not ret:
         break
 
-#    cv2.imshow('camera capture', frame)
+    cv2.imshow('camera capture', frame)
 
     if(threading.activeCount() == 1):
         th = FaceThread(frame)
